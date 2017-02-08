@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d import proj3d
 from sklearn import metrics
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans,SpectralClustering
 from sklearn.decomposition import PCA
 from pylab import *
 from sklearn.decomposition import KernelPCA 
@@ -26,6 +26,19 @@ def bench_k_means(estimator, name, data):
              metrics.silhouette_score(data, estimator.labels_,
                                       metric='euclidean')))
                                       # sample_size=sample_size)))
+def bench_spectral(estimator, name, data):
+    t0 = time()
+    estimator.fit(data)
+    
+    print('% 9s  %.2fs  %.3f   %.3f   %.3f   %.3f   %.3f    %.3f'
+          % (name, (time() - t0),
+             metrics.homogeneity_score(labels, estimator.labels_), 
+             metrics.completeness_score(labels, estimator.labels_),
+             metrics.v_measure_score(labels, estimator.labels_),
+             metrics.adjusted_rand_score(labels, estimator.labels_),
+             metrics.adjusted_mutual_info_score(labels,  estimator.labels_),
+             metrics.silhouette_score(data, estimator.labels_,
+                                      metric='euclidean')))                                      
 
 # module for comparing the performance of different clustering runs 
 # based on full dataset and the reduced dataset
@@ -39,11 +52,22 @@ def k_means_performance_comparison(data,n_labels):
     # kmeans algorithm only once with n_init=1
 	pca = PCA(n_components=10).fit(data)
 	kpca =KernelPCA(n_components=5,kernel = 'rbf')
-	bench_k_means(KMeans(init='k-means++',n_clusters=n_labels, n_init=1),
+	bench_k_means(KMeans(init='k-means++',n_clusters=n_labels, n_init=10),
               name="PCA-based",data=pca.fit_transform(data))
-	bench_k_means(KMeans(init='k-means++',n_clusters=n_labels, n_init=1),
+	bench_k_means(KMeans(init='k-means++',n_clusters=n_labels, n_init=10),
               name="kPCA-based",data= kpca.fit_transform(data))
-	
+
+def Spectral_performance_comparison(data,n_labels):
+	bench_spectral(SpectralClustering(n_clusters=n_labels, eigen_solver='arpack',affinity="nearest_neighbors"),
+		name="SC NN", data=data)
+	bench_spectral(SpectralClustering(n_clusters=n_labels,eigen_solver='arpack',affinity="rbf"),
+		name="SC rbf", data=data)
+	pca = PCA(n_components=10).fit(data)
+	kpca =KernelPCA(n_components=5,kernel = 'rbf')
+	bench_spectral(SpectralClustering(n_clusters=n_labels, eigen_solver='arpack',affinity="nearest_neighbors"),
+		name="SC NN pca", data=pca.fit_transform(data))
+	bench_spectral(SpectralClustering(n_clusters=n_labels,eigen_solver='arpack',affinity="nearest_neighbors"),
+		name="SC rbf kpca", data=kpca.fit_transform(data))
 
 def k_means_visualise(estimator,data,n_labels,y):
 	reduced_data = estimator.fit_transform(data)
@@ -64,13 +88,13 @@ def k_means_visualise(estimator,data,n_labels,y):
 	centroids = kmeans.cluster_centers_
 	ax.scatter(centroids[:, 0], centroids[:, 1],centroids[:, 2],
             marker='x', s=169, linewidths=3,
-            color='w', zorder=10)
+            color='b', zorder=10)
 
 
 if __name__ == "__main__":
 
 	os.chdir('/home/niharikashimona/Downloads/Datasets/')
-	dataset = sio.loadmat('Aut_classify1rz.mat')
+	dataset = sio.loadmat('Aut_classify2rz.mat')
 	data= dataset['data']
 	y = dataset['y']
 	y = np.ravel(y)
@@ -78,12 +102,22 @@ if __name__ == "__main__":
 	n_samples, n_features = data.shape
 	n_labels = len(np.unique(y))
 	labels = y
+	print("K means run \n")
 	print("n_labels: %d, \t n_samples %d, \t n_features %d"
       % (n_labels, n_samples, n_features))
 	print(79 * '_')
 	print('% 9s' % 'init'
       '    time  inertia    homo   compl  v-meas     ARI AMI  silhouette')
 	k_means_performance_comparison(data,n_labels)
+	print(79 * '_')
+
+	print("Spectral Clustering run \n")
+	print("n_labels: %d, \t n_samples %d, \t n_features %d"
+      % (n_labels, n_samples, n_features))
+	print(79 * '_')
+	print('% 9s' % 'init'
+      '    time   homo   compl  v-meas     ARI AMI  silhouette')
+	Spectral_performance_comparison(data,n_labels)
 	print(79 * '_')
 
 	pca = PCA(n_components =10)
