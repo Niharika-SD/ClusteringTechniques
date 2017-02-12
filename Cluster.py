@@ -16,7 +16,7 @@ def bench_k_means(estimator, name, data):
     t0 = time()
     estimator.fit(data)
     
-    print('% 9s   %.2fs    %i   %.3f   %.3f   %.3f   %.3f   %.3f    %.3f'
+    print('% 9s   %.4fs    %i   %.3f   %.3f   %.3f   %.3f   %.3f    %.3f'
           % (name, (time() - t0), estimator.inertia_,
              metrics.homogeneity_score(labels, estimator.labels_),
              metrics.completeness_score(labels, estimator.labels_),
@@ -30,7 +30,7 @@ def bench_spectral(estimator, name, data):
     t0 = time()
     estimator.fit(data)
     
-    print('% 9s  %.2fs  %.3f   %.3f   %.3f   %.3f   %.3f    %.3f'
+    print('% 9s  %.4fs  %.3f   %.3f   %.3f   %.3f   %.3f    %.3f'
           % (name, (time() - t0),
              metrics.homogeneity_score(labels, estimator.labels_), 
              metrics.completeness_score(labels, estimator.labels_),
@@ -38,7 +38,7 @@ def bench_spectral(estimator, name, data):
              metrics.adjusted_rand_score(labels, estimator.labels_),
              metrics.adjusted_mutual_info_score(labels,  estimator.labels_),
              metrics.silhouette_score(data, estimator.labels_,
-                                      metric='euclidean')))                                      
+                                      metric='euclidean')))
 
 # module for comparing the performance of different clustering runs 
 # based on full dataset and the reduced dataset
@@ -58,16 +58,16 @@ def k_means_performance_comparison(data,n_labels):
               name="kPCA-based",data= kpca.fit_transform(data))
 
 def Spectral_performance_comparison(data,n_labels):
-	bench_spectral(SpectralClustering(n_clusters=n_labels, eigen_solver='arpack',affinity="nearest_neighbors"),
+	bench_spectral(SpectralClustering(n_clusters=n_labels,affinity="nearest_neighbors",n_neighbors = 20,assign_labels ='kmeans'),
 		name="SC NN", data=data)
-	bench_spectral(SpectralClustering(n_clusters=n_labels,eigen_solver='arpack',affinity="rbf"),
+	bench_spectral(SpectralClustering(n_clusters=n_labels,affinity="rbf",assign_labels ='kmeans'),
 		name="SC rbf", data=data)
-	pca = PCA(n_components=10).fit(data)
+	pca = PCA(n_components=30).fit(data)
 	kpca =KernelPCA(n_components=5,kernel = 'rbf')
-	bench_spectral(SpectralClustering(n_clusters=n_labels, eigen_solver='arpack',affinity="nearest_neighbors"),
+	bench_spectral(SpectralClustering(n_clusters=n_labels,affinity="nearest_neighbors",n_neighbors = n_labels,assign_labels ='kmeans'),
 		name="SC NN pca", data=pca.fit_transform(data))
-	bench_spectral(SpectralClustering(n_clusters=n_labels,eigen_solver='arpack',affinity="nearest_neighbors"),
-		name="SC rbf kpca", data=kpca.fit_transform(data))
+	bench_spectral(SpectralClustering(n_clusters=n_labels,affinity="nearest_neighbors",n_neighbors = n_labels,assign_labels ='kmeans'),
+		name="SC NN kpca", data=kpca.fit_transform(data))
 
 def k_means_visualise(estimator,data,n_labels,y):
 	reduced_data = estimator.fit_transform(data)
@@ -79,22 +79,26 @@ def k_means_visualise(estimator,data,n_labels,y):
 	ax = fig.add_subplot(111, projection='3d')
 	for i in xrange(y.shape[0]):
 		if y[i] == 0:
-			ax.scatter(reduced_data[i, 0], reduced_data[i, 1],reduced_data[i, 2], '^',c ='r')
+			li = ax.scatter(reduced_data[i, 0], reduced_data[i, 1],reduced_data[i, 2], '^',c ='r')
 		elif y[i] ==1:	
-			ax.scatter(reduced_data[i, 0], reduced_data[i, 1],reduced_data[i, 2], 'o',c ='g')
+			ll = ax.scatter(reduced_data[i, 0], reduced_data[i, 1],reduced_data[i, 2], 'o',c ='g')
 		else: 
-			ax.scatter(reduced_data[i, 0], reduced_data[i, 1],reduced_data[i, 2], 'o',c ='b')
+			le =ax.scatter(reduced_data[i, 0], reduced_data[i, 1],reduced_data[i, 2], 'o',c ='b')
     
 	centroids = kmeans.cluster_centers_
 	ax.scatter(centroids[:, 0], centroids[:, 1],centroids[:, 2],
             marker='x', s=169, linewidths=3,
             color='b', zorder=10)
+	if n_labels ==3:
+		plt.legend((li,ll,le),('C1','C2','C3'))
+	else:
+		plt.legend((li,ll),('C1','C2'))
 
 
-if __name__ == "__main__":
+if __name__ == "__main__" :
 
 	os.chdir('/home/niharikashimona/Downloads/Datasets/')
-	dataset = sio.loadmat('Aut_classify2rz.mat')
+	dataset = sio.loadmat('Aut_classify1rz.mat')
 	data= dataset['data']
 	y = dataset['y']
 	y = np.ravel(y)
@@ -124,9 +128,9 @@ if __name__ == "__main__":
 	kpca = KernelPCA(n_components =5,kernel ='poly',degree =3)
 	k_means_visualise(pca,data,n_labels,y)
 	plt.title('K-means clustering on the dataset (PCA-reduced data)\n'
-          'Centroids are marked with white cross')
+          'Centroids are marked with blue cross')
 	plt.show()
 	k_means_visualise(kpca,data,n_labels,y)
 	plt.title('K-means clustering on the dataset (kPCA-reduced data)\n'
-          'Centroids are marked with white cross')
+          'Centroids are marked with blue cross')
 	plt.show()
