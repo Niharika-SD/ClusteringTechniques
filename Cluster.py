@@ -1,6 +1,10 @@
 import numpy as np
 from time import time
+import matplotlib
+matplotlib.use('Agg')
 from matplotlib import pyplot as plt
+plt.ioff()
+import sys,glob
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d import proj3d
 from sklearn import metrics
@@ -93,44 +97,58 @@ def k_means_visualise(estimator,data,n_labels,y):
 		plt.legend((li,ll,le),('C1','C2','C3'))
 	else:
 		plt.legend((li,ll),('C1','C2'))
-
+        return fig
 
 if __name__ == "__main__" :
 
-	os.chdir('/home/niharikashimona/Downloads/Datasets/')
-	dataset = sio.loadmat('Aut_classify1rz.mat')
-	data= dataset['data']
-	y = dataset['y']
-	y = np.ravel(y)
-	np.random.seed(42)
-	n_samples, n_features = data.shape
-	n_labels = len(np.unique(y))
-	labels = y
-	print("K means run \n")
-	print("n_labels: %d, \t n_samples %d, \t n_features %d"
-      % (n_labels, n_samples, n_features))
-	print(79 * '_')
-	print('% 9s' % 'init'
-      '    time  inertia    homo   compl  v-meas     ARI AMI  silhouette')
-	k_means_performance_comparison(data,n_labels)
-	print(79 * '_')
+	os.chdir('/home/ndsouza4/matlab/New_files/Correlation_data/classify/wrz/')
+        for filename in glob.glob('A*.mat'):
+            dataset = sio.loadmat(filename)
+            tfilename = filename.split('.')
+            sys.stdout=open(tfilename[0]+'.txt',"w")
+            print filename
+            
+            data= dataset['data']
+            y = dataset['y']
+            y = np.ravel(y)
+            np.random.seed(42)
+            n_samples, n_features = data.shape
+            n_labels = len(np.unique(y))
+            labels = y
+            print("K means run \n")
+            print("n_labels: %d, \t n_samples %d, \t n_features %d"
+                  % (n_labels, n_samples, n_features))
+            print(79 * '_')
+            print('% 9s' % 'init'
+                  '    time  inertia    homo   compl  v-meas     ARI AMI  silhouette')
+            k_means_performance_comparison(data,n_labels)
+            print(79 * '_')
 
-	print("Spectral Clustering run \n")
-	print("n_labels: %d, \t n_samples %d, \t n_features %d"
-      % (n_labels, n_samples, n_features))
-	print(79 * '_')
-	print('% 9s' % 'init'
-      '    time   homo   compl  v-meas     ARI AMI  silhouette')
-	Spectral_performance_comparison(data,n_labels)
-	print(79 * '_')
+            print("Spectral Clustering run \n")
+            print("n_labels: %d, \t n_samples %d, \t n_features %d"
+                  % (n_labels, n_samples, n_features))
+            print(79 * '_')
+            print('% 9s' % 'init'
+                  '    time   homo   compl  v-meas     ARI AMI  silhouette')
+            Spectral_performance_comparison(data,n_labels)
+            print(79 * '_')
 
-	pca = PCA(n_components =10)
-	kpca = KernelPCA(n_components =5,kernel ='poly',degree =3)
-	k_means_visualise(pca,data,n_labels,y)
-	plt.title('K-means clustering on the dataset (PCA-reduced data)\n'
-          'Centroids are marked with blue cross')
-	plt.show()
-	k_means_visualise(kpca,data,n_labels,y)
-	plt.title('K-means clustering on the dataset (kPCA-reduced data)\n'
-          'Centroids are marked with blue cross')
-	plt.show()
+            pca = PCA(n_components =10)
+            kpca = KernelPCA(n_components =5,kernel ='poly',degree =3)
+            fig = k_means_visualise(pca,data,n_labels,y)
+            
+            plt.title('K-means clustering on the dataset (PCA-reduced data)\n'
+                      'Centroids are marked with blue cross')
+            
+            name = tfilename[0]+'fig' + '_PCA.png'
+            fig.savefig(name)   # save the figure to file
+            plt.close(fig)
+            fig = k_means_visualise(kpca,data,n_labels,y)
+            
+            plt.title('K-means clustering on the dataset (kPCA-reduced data)\n'
+                      'Centroids are marked with blue cross')
+            name = tfilename[0]+'fig'+'_kPCA.png'
+            fig.savefig(name)   # save the figure to file
+            plt.close(fig)
+
+sys.stdout.close()
