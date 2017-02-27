@@ -17,36 +17,30 @@ x = dataset['data']
 y = dataset['y']
 y = np.ravel(y)
 mat = []
-kf_total = StratifiedKFold(n_splits =20,shuffle=True)
+kf_total = StratifiedKFold(n_splits =50,shuffle=True)
 kf_total.get_n_splits(x, y)
-ct =1 
-
+ 
+X_new = []        
 for train, test in kf_total.split(x,y):
-
-	if ct >1:
-		X_prev = X_new
 
 	sklearn_pca= sklearnPCA()
 	print x[train].shape
 	sklearn_trasf_pca =sklearn_pca.fit_transform(x[train])
 	
-	X_new = sklearn_pca.components_[:5,:]
-	print(X_new.shape)
+	X_new.append(sklearn_pca.components_[:5,:])
 
-	if ct >1:
-		mat.append(np.dot(X_prev,X_new.T))
+#sys.stdout=open('PCA_robustness.txt',"w")
+mat =[]
+for i in range(len(X_new)):
+	for j in range(len(X_new)):
+                if i!=j:
+                        mat.append(np.dot(X_new[i],X_new[j].T))
 
-	ct = ct+1
-
-print mat[9]
-
-sys.stdout=open('PCA_robustness.txt',"w")
+rob_value = []
 
 for i in range(len(mat)):
-	print ('\n')
-	print(mat[i])
+        rob_value.append(np.sum(mat[i].max(0)))
 
-sys.stdout.close()
-
-
-
+plt.plot(rob_value)
+plt.show()
+#sys.stdout.close()
