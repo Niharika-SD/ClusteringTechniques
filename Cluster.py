@@ -73,48 +73,55 @@ def Spectral_performance_comparison(data,n_labels):
 	bench_spectral(SpectralClustering(n_clusters=n_labels,affinity="nearest_neighbors",n_neighbors = n_labels,assign_labels ='kmeans'),
 		name="SC NN kpca", data=kpca.fit_transform(data))
 
+def plot_embedding(X, title=None):
+    x_min, x_max = np.min(X, 0), np.max(X, 0)
+    X = (X - x_min) / (x_max - x_min)
+
+    fig= plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    for i in range(X.shape[0]):
+        ax.scatter(X[i, 0], X[i, 1],X[i,2], color=plt.cm.Set1(y[i] / 10.))
+    plt.xticks([]), plt.yticks([])
+    if title is not None:
+        plt.title(title)
+    return fig,ax
+
 def k_means_visualise(estimator,data,n_labels,y):
-	reduced_data = estimator.fit_transform(data)
-	kmeans = KMeans(init='k-means++', n_clusters=n_labels, n_init=10)
-	kmeans.fit(reduced_data)
-	y_pred = kmeans.predict(reduced_data)
-	count = 0
-	fig = plt.figure()
-	ax = fig.add_subplot(111, projection='3d')
-	for i in xrange(y.shape[0]):
-		if y[i] == 0:
-			li = ax.scatter(reduced_data[i, 0], reduced_data[i, 1],reduced_data[i, 2], '^',c ='r')
-		elif y[i] ==1:	
-			ll = ax.scatter(reduced_data[i, 0], reduced_data[i, 1],reduced_data[i, 2], 'o',c ='g')
-		else: 
-			le =ax.scatter(reduced_data[i, 0], reduced_data[i, 1],reduced_data[i, 2], 'o',c ='b')
-    
-	centroids = kmeans.cluster_centers_
-	ax.scatter(centroids[:, 0], centroids[:, 1],centroids[:, 2],
+    reduced_data = estimator.fit_transform(data)
+    kmeans = KMeans(init='k-means++', n_clusters=n_labels, n_init=10)
+    kmeans.fit(reduced_data)
+    y_pred = kmeans.predict(reduced_data)
+    fig,ax  = plot_embedding(reduced_data,'K means reduction')  
+    centroids = kmeans.cluster_centers_
+    ax.scatter(centroids[:, 0], centroids[:, 1],centroids[:, 2],
             marker='x', s=169, linewidths=3,
             color='b', zorder=10)
-	if n_labels ==3:
-		plt.legend((li,ll,le),('C1','C2','C3'))
-	else:
-		plt.legend((li,ll),('C1','C2'))
-        return fig
+    return fig
 
 if __name__ == "__main__" :
+  a = 1
 
-	os.chdir('/home/ndsouza4/matlab/New_files/Correlation_data/classify/wrz/')
-        for filename in glob.glob('A*.mat'):
+  if a ==1:
+    strg ='AD*.mat'
+  else:
+    strg = 'Aut*.mat'
+  os.chdir('/home/niharika-shimona/Documents/Projects/Autism_Network/code/Datasets_Matched')
+  for filename in glob.glob(strg):
             dataset = sio.loadmat(filename)
             tfilename = filename.split('.')
             sys.stdout=open(tfilename[0]+'.txt',"w")
             print filename
-            
-            data= dataset['data']
-            y = dataset['y']
-            y = np.ravel(y)
+            if a ==1:
+              data = dataset['data']
+              y = dataset['y']
+            else:
+              y = np.concatenate((dataset['y_aut'],dataset['y_con']),axis =0)
+              id = np.concatenate((dataset['id_Aut'],dataset['id_con']),axis =0)
+              data = np.concatenate((dataset['data_Aut'],dataset['data_Controls']),axis =0)
             np.random.seed(42)
             n_samples, n_features = data.shape
             n_labels = len(np.unique(y))
-            labels = y
+            labels = np.ravel(y)
             print("K means run \n")
             print("n_labels: %d, \t n_samples %d, \t n_features %d"
                   % (n_labels, n_samples, n_features))
@@ -149,6 +156,6 @@ if __name__ == "__main__" :
                       'Centroids are marked with blue cross')
             name = tfilename[0]+'fig'+'_kPCA.png'
             fig.savefig(name)   # save the figure to file
-            plt.close(fig)
+            plt.close(fig)      
 
 sys.stdout.close()

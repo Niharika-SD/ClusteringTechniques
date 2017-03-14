@@ -2,9 +2,10 @@ from time import time
 import scipy.io as sio
 import numpy as np
 import matplotlib
-matplotlib.use('Agg')
+
 import matplotlib.pyplot as plt
-plt.ioff()
+
+from sklearn.decomposition import KernelPCA as sklearnKPCA
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d import proj3d
 from matplotlib import offsetbox
@@ -12,14 +13,15 @@ from sklearn import (manifold, datasets, decomposition, ensemble,
                      discriminant_analysis, random_projection)
 import os,sys,glob
 
-os.chdir('/home/ndsouza4/matlab/New_files/Correlation_data/classify/rz/')
-dataset = sio.loadmat('Aut2cl.mat')
+os.chdir('/home/niharika-shimona/Documents/Projects/Autism_Network/code/Datasets_Matched')
+
+dataset = sio.loadmat('ADHD_Subtype.mat')
 X= dataset['data']
 y = dataset['y']
 y = np.ravel(y)
 n_samples, n_features = X.shape
 n_neighbors = 7
-sklearn_kpca = sklearnKPCA(n_components=3,kernel="poly", degree =3)
+sklearn_kpca = sklearnKPCA(n_components=5,kernel="poly", degree =3)
 sklearn_transf_kpca = sklearn_kpca.fit_transform(X)
 
 
@@ -38,7 +40,7 @@ def plot_embedding(X, title=None):
         plt.title(title)
 
 print("Computing t-SNE embedding")
-tsne = manifold.TSNE(n_components=3, init=sklearn_kpca.fit_transform(X), random_state=0)
+tsne = manifold.TSNE(n_components=5, init=sklearn_kpca.fit_transform(X), random_state=0)
 t0 = time()
 X_tsne = tsne.fit_transform(X)
 
@@ -46,7 +48,7 @@ plot_embedding(X_tsne,
                "t-SNE embedding of the data kPCA initialisation(time %.2fs)" %
                (time() - t0))
 print("Computing t-SNE embedding")
-tsne = manifold.TSNE(n_components=3, init='pca', random_state=0)
+tsne = manifold.TSNE(n_components=5, init='pca', random_state=0)
 t0 = time()
 X_tsne = tsne.fit_transform(X)
 
