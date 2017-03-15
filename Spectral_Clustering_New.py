@@ -11,7 +11,7 @@ colors = np.array([x for x in 'bgrcmykbgrcmykbgrcmykbgrcmyk'])
 colors = np.hstack([colors] * 20)
 
 data = sio.loadmat('patient_data_red_rz.mat')
-data_1 = sio.loadmat('/home/niharika-shimona/Documents/Projects/Autism_Network/code/patient_data_time_course/dis_affinity.mat')
+data_1 = sio.loadmat('/home/niharika-shimona/Documents/Projects/Autism_Network/code/Comparative_Affinity/dis_affinity116.mat')
 dist_matrix = data_1['dis_affinity']
 
 delta = 0.01
@@ -23,7 +23,7 @@ spectral = SpectralClustering(n_clusters=2, eigen_solver=None, random_state=None
 y = spectral.fit_predict(X)
 t1 = time.time()
 
-print X.shape
+print spectral.labels_
 print metrics.silhouette_score(X, spectral.labels_,
                                       metric='euclidean')
 y_pred = spectral.labels_.astype(np.int)
