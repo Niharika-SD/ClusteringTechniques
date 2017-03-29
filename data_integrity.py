@@ -15,8 +15,8 @@ def hellinger2(p, q):
 def hellinger3(p, q):
     return np.sqrt(np.sum((np.sqrt(p) - np.sqrt(q)) ** 2)) / _SQRT2
 
-dataset = sio.loadmat('/home/ndsouza4/matlab/New_files/patient_data_matched.mat')
-X = dataset['data']
+dataset = sio.loadmat('/home/niharika-shimona/Documents/patient_data_red.mat')
+X = dataset['patient_data']
 [m,n] = X.shape
 print X[1,:].shape
 

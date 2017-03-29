@@ -50,9 +50,9 @@ def create_affinity_mat(datafolder,n_patients,n_parcellations,n_com):
 			data_A = sio.loadmat('patient'+ `i+1` + 'TC.mat')
 			A = data_A['patient']['TC_avg'][0,0]
 			[D,V] = np.linalg.eigh(np.dot(A,A.T))
-			indx=np.argsort(D)[::-1]
+			indx=np.argsort(abs(D))[::-1]
 			D=D[indx]
-			S = np.sqrt(D)
+			S = np.sqrt(abs(D))
 			V=V[:,indx]
 			v = np.concatenate((v,(V[:,0:n_com].T).reshape((1,n_com*n_parcellations))),axis =0)
 			s = np.concatenate((s,S[0:n_com].reshape((n_com,1))),axis =1)
@@ -70,7 +70,7 @@ def create_affinity_mat(datafolder,n_patients,n_parcellations,n_com):
 
 	return aff
 
-def create_affinity_mat_IP(datafolder,n_parcellations,patient_no):
+def create_affinity_mat_IP(datafolder,n_parcellations,patient_ID):
 
 	""" Computes affinity matrix for each patient """
 
@@ -78,7 +78,7 @@ def create_affinity_mat_IP(datafolder,n_parcellations,patient_no):
 
 	for i in range(n_parcellations):
 
-			data_A =sio.loadmat('patient'+ `patient_no+1` + '_TC_all.mat')
+			data_A =sio.loadmat('Ntimeseries_'+ patient_ID + '.mat')
 			A = data_A['patient']['timeseries'][0,0]['data'][0,i]
 
 			if i ==0:
@@ -87,14 +87,16 @@ def create_affinity_mat_IP(datafolder,n_parcellations,patient_no):
 				s = np.zeros((n_com,1))
 					
 			[D,V] = np.linalg.eigh(np.dot(A.T,A))
-			indx=np.argsort(D)[::-1]
+			indx=np.argsort(abs(D))[::-1]
 			D=D[indx]
-			S = np.sqrt(D)
+			S = np.sqrt(abs(D))
+			print S
 			V=V[:,indx]
 			v = np.concatenate((v,(V.T).reshape((1,n_com*A.shape[1]))),axis =0)
 			s = np.concatenate((s,S.reshape((S.shape[0],1))),axis =1)
 
 	W = calculate_weights(s[:,1:], 'other')
+	print W
 	count = 0
 	aff = np.zeros((1,((n_parcellations*n_parcellations)-n_parcellations)/2))
 	for i in range(n_parcellations):
@@ -103,7 +105,7 @@ def create_affinity_mat_IP(datafolder,n_parcellations,patient_no):
 			V_B = (v[j+1,:].reshape(n_com,A.shape[1])).T
 			aff[0,count] = E_frob_eff(V_A,V_B,W)
 			count =count+1
-			print i, j
+			# print i, j
 
 	return aff
 
@@ -115,17 +117,20 @@ def main():
 		datafolder = '/home/niharika-shimona/Documents/Projects/Autism_Network/code/patient_data_time_course/'
 		for i in range(5,117):
 			dis_affinity =create_affinity_mat(datafolder,279,116,i)
-			sio.savemat('/home/niharika-shimona/Documents/Projects/Autism_Network/code/Comparative_Affinity/dis_affinity'+`i`+'.mat', {'dis_affinity': dis_affinity})
+			sio.savemat('/home/niharika-shimona/Documents/Projects/Autism_Network/code/Comparative_Affinity_n/dis_affinity'+`i`+'.mat', {'dis_affinity': dis_affinity})
 	else:
 
-		datafolder = '/home/niharika-shimona/Documents/Projects/Autism_Network/code/patient_data_time_course_com/'
-		dis_affinity_IP = np.zeros((280,6670))
-		for i in range(280):
-
-			dis_affinity_IP[i] =create_affinity_mat_IP(datafolder,116,i)
-			sio.savemat('/home/niharika-shimona/Documents/Projects/Autism_Network/code/Comparative_Affinity/dis_affinity_IP'+`i`+'.mat', {'dis_affinity': dis_affinity_IP[i,:]})	
-			print 'patient' + `i+1`+'processed'
-		sio.savemat('/home/niharika-shimona/Documents/Projects/Autism_Network/code/Comparative_Affinity/dis_affinity_IP.mat', {'dis_affinity': dis_affinity_IP[1:,:]})
+		datafolder = '/home/niharika-shimona/Documents/patient_data_timecourse_n_2/'
+		dis_affinity_IP = np.zeros((279,6670))
+		os.chdir(datafolder)
+		i =0
+		for file in glob.glob("*.mat"):
+			tfilename = file.split('_')[1].split('.')		
+			dis_affinity_IP[i] =create_affinity_mat_IP(datafolder,116,tfilename[0])
+			sio.savemat('/home/niharika-shimona/Documents/Projects/Autism_Network/code/Comparative_Affinity_n/dis_affinity_IP_'+tfilename[0]+'.mat', {'dis_affinity': dis_affinity_IP[i,:]})	
+			print 'patient' + tfilename[0]+'processed'
+			i =i+1
+		sio.savemat('/home/niharika-shimona/Documents/Projects/Autism_Network/code/Comparative_Affinity/dis_affinity_IP.mat', {'dis_affinity': dis_affinity_IP[:,:]})
 
 if __name__ == '__main__':
 		main()
