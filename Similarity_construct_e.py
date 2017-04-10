@@ -130,7 +130,7 @@ def main():
 			sio.savemat('/home/niharika-shimona/Documents/Projects/Autism_Network/code/Comparative_Affinity_n/dis_affinity_IP_'+tfilename[0]+'.mat', {'dis_affinity': dis_affinity_IP[i,:]})	
 			print 'patient' + tfilename[0]+'processed'
 			i =i+1
-		sio.savemat('/home/niharika-shimona/Documents/Projects/Autism_Network/code/Comparative_Affinity/dis_affinity_IP.mat', {'dis_affinity': dis_affinity_IP[:,:]})
+		sio.savemat('/home/niharika-shimona/Documents/Projects/Autism_Network/code/Comparative_Affinity_n/dis_affinity_IP.mat', {'dis_affinity': dis_affinity_IP[:,:]})
 
 if __name__ == '__main__':
 		main()
