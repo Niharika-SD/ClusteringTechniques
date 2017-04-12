@@ -8,7 +8,7 @@ import sys,glob,os
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d import proj3d
 from sklearn import metrics
-from sklearn.decomposition import PCA,SparsePCA
+from sklearn.decomposition import PCA,MiniBatchSparsePCA
 from sklearn.svm import SVC,SVR
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import mean_squared_error,explained_variance_score,mean_absolute_error,r2_score,make_scorer
@@ -36,7 +36,7 @@ def create_dataset(df_aut,df_cont,task,folder):
 	if task == 'Classification':
 		for ID_NO in df_cont['ID']:
 
-			filename = folder + 'corr_' + ID_NO + '.mat'
+			filename = folder + 'Corr_' + ID_NO + '.mat'
 			data = sio.loadmat(filename) 
 			x_cont = data['corr']
 
@@ -44,7 +44,7 @@ def create_dataset(df_aut,df_cont,task,folder):
 
 		for ID_NO in df_aut['ID']:
 
-			filename = folder + 'corr_' + ID_NO + '.mat'
+			filename = folder + 'Corr_' + ID_NO + '.mat'
 			data = sio.loadmat(filename) 
 			x_aut = data['corr']
 
@@ -62,7 +62,7 @@ def create_dataset(df_aut,df_cont,task,folder):
 
     	for ID_NO,score in zip(df_aut['ID'],df_aut[task]):
 
-				filename = folder + '/corr_' + `ID_NO` + '.mat'
+				filename = folder + '/Corr_' + `ID_NO` + '.mat'
 				data = sio.loadmat(filename) 
 				x_aut = np.concatenate((x_aut,data['corr']),axis =0)
 				y_aut = np.concatenate((y_aut,score*np.ones((1,1))),axis =0)
@@ -71,7 +71,7 @@ def create_dataset(df_aut,df_cont,task,folder):
 			
 			for ID_NO,score in zip(df_cont['ID'],df_cont[task]):
 
-				filename = folder + '/corr_' + `ID_NO` + '.mat'
+				filename = folder + '/Corr_' + `ID_NO` + '.mat'
 				data = sio.loadmat(filename) 
 				x_cont = np.concatenate((x_cont,data['corr']),axis =0)
 				y_cont = np.concatenate((y_cont,score*np.ones((1,1))),axis =0)
@@ -84,39 +84,41 @@ def create_dataset(df_aut,df_cont,task,folder):
 if __name__ == '__main__':
 
 	df_aut,df_cont = Split_class()
-	x_aut,y_aut,x_cont,y_cont = create_dataset(df_aut,df_cont,'ADOS.Total','/home/niharika-shimona/Documents/Projects/Autism_Network/code/patient_data')
+	x_aut,y_aut,x_cont,y_cont = create_dataset(df_aut,df_cont,'bytSrsPSocTotSrsRaw','/home/niharika-shimona/Documents/Projects/Autism_Network/code/patient_data')
 	
 	x =x_aut
 	y =np.ravel(y_aut)	
-	sklearn_spca  = SparsePCA(alpha= 1,max_iter=1000)
-	svr_poly = SVR(kernel='rbf',C= 0.01)
+	sklearn_spca  = MiniBatchSparsePCA(batch_size = 10,alpha =0.01)
+	svr_poly = SVR(kernel='poly' ,degree = 3)
 	spca_svr = Pipeline([('spca',sklearn_spca), ('svr', svr_poly)])
 	my_scorer = make_scorer(explained_variance_score)
 
-
-	c_range = np.logspace(-2, 2, 3)
+	model  =[] 
+	nested_scores =[]
 	ridge_range = np.linspace(0,1,3)
-	n_comp = np.asarray(np.linspace(50,90,5),dtype = 'int8')
-	p_grid = dict(spca__n_components =n_comp,spca__ridge_alpha=ridge_range)
+	c_range = np.logspace(-2,2,5)
+	n_comp = np.asarray(np.linspace(10,60,5),dtype = 'int8')
+	p_grid = dict(spca__n_components =n_comp,svr__C =c_range)
 
-	i=5
-	inner_cv = KFold(n_splits=10, shuffle=True, random_state=i)
-	outer_cv = KFold(n_splits=10, shuffle=True, random_state=i)
+	for i in range(10):
+		inner_cv = KFold(n_splits=10, shuffle=True, random_state=i)
+		outer_cv = KFold(n_splits=10, shuffle=True, random_state=i)
 
-	clf = GridSearchCV(estimator=spca_svr, param_grid=p_grid, scoring =my_scorer,  cv=inner_cv)
-	clf.fit(x,y)
+		clf = GridSearchCV(estimator=spca_svr, param_grid=p_grid, scoring =my_scorer,  cv=inner_cv)
+		clf.fit(x,y)
 
-	print clf.best_score_
-	print clf.best_estimator_
-	print '\n'
-	model = clf.best_estimator_
+		print clf.best_score_
+		print clf.best_estimator_
+		print '\n'
+		model.append(clf.best_estimator_)
 
-    # nested_score = cross_val_score(clf, X=x, y=y, cv=outer_cv,scoring =my_scorer)
-    	# print nested_score.mean()
-    	# nested_score[i] = nested_score.mean()
-	print 'hi'
-	# m = nested_score.index(max(nested_score))
-	final_model = model
+		nested_score = cross_val_score(clf, X=x, y=y, cv=outer_cv,scoring =my_scorer)
+		print nested_score.mean()
+		nested_scores.append(nested_score.mean())
+		print 'hi'
+
+	m = nested_scores.index(max(nested_scores))
+	final_model = model[m]
  	i =0
 
 	sPCA_MAE =[]
@@ -133,7 +135,7 @@ if __name__ == '__main__':
 		sPCA_r2.append(r2_score(y[train], final_model.predict(x[train]), multioutput='variance_weighted'))
 		sPCA_exp.append(explained_variance_score(y[train], final_model.predict(x[train]), multioutput='variance_weighted'))
 		i= i+1
-		print 'Iteration', i ,'\n' 
+		print 'Split', i ,'\n' 
 		print 'MAE : ', mean_squared_error(y[train], final_model.predict(x[train]))
 		print 'Explained Variance Score : ', explained_variance_score(y[train], final_model.predict(x[train]))
 		print 'r2 score: ' , r2_score(y[train], final_model.predict(x[train]))
@@ -161,6 +163,9 @@ if __name__ == '__main__':
 		name = `i`+ '_test.png'
 		fig.savefig(name)   # save the figure to file
 		plt.close(fig)
+
+	print(np.mean(sPCA_MAE),np.mean(sPCA_r2),np.mean(sPCA_exp))
+	print(np.mean(sPCA_MAE_test),np.mean(sPCA_r2_test),np.mean(sPCA_exp_test))
 
 	sys.stdout.close()
 	        

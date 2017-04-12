@@ -62,15 +62,15 @@ def k_means_performance_comparison(data,n_labels):
               name="kPCA-based",data= kpca.fit_transform(data))
 
 def Spectral_performance_comparison(data,n_labels):
-	bench_spectral(SpectralClustering(n_clusters=n_labels,affinity="nearest_neighbors",n_neighbors = 20,assign_labels ='kmeans'),
+	bench_spectral(SpectralClustering(n_clusters=n_labels,affinity="nearest_neighbors",n_neighbors = 5,assign_labels ='kmeans'),
 		name="SC NN", data=data)
 	bench_spectral(SpectralClustering(n_clusters=n_labels,affinity="rbf",assign_labels ='kmeans'),
 		name="SC rbf", data=data)
 	pca = PCA(n_components=30).fit(data)
 	kpca =KernelPCA(n_components=5,kernel = 'rbf')
-	bench_spectral(SpectralClustering(n_clusters=n_labels,affinity="nearest_neighbors",n_neighbors = n_labels,assign_labels ='kmeans'),
+	bench_spectral(SpectralClustering(n_clusters=n_labels,affinity="nearest_neighbors",n_neighbors = 5,assign_labels ='kmeans'),
 		name="SC NN pca", data=pca.fit_transform(data))
-	bench_spectral(SpectralClustering(n_clusters=n_labels,affinity="nearest_neighbors",n_neighbors = n_labels,assign_labels ='kmeans'),
+	bench_spectral(SpectralClustering(n_clusters=n_labels,affinity="nearest_neighbors",n_neighbors = 5,assign_labels ='kmeans'),
 		name="SC NN kpca", data=kpca.fit_transform(data))
 
 def plot_embedding(X, title=None):
@@ -98,8 +98,15 @@ def k_means_visualise(estimator,data,n_labels,y):
             color='b', zorder=10)
     return fig
 
+def spectral_visualise(estimator,data,n_labels,y):
+    reduced_data = estimator.fit_transform(data)
+    Spectral  =SpectralClustering(n_clusters=n_labels,affinity="nearest_neighbors",n_neighbors = 5,assign_labels ='kmeans')
+    y_pred = Spectral.fit_predict(reduced_data)
+    fig,ax  = plot_embedding(reduced_data,'K means reduction')  
+    return fig
+
 if __name__ == "__main__" :
-  a = 1
+  a = 0
 
   if a ==1:
     strg ='AD*.mat'
@@ -140,7 +147,7 @@ if __name__ == "__main__" :
             Spectral_performance_comparison(data,n_labels)
             print(79 * '_')
 
-            pca = PCA(n_components =10)
+            pca = PCA(n_components =30)
             kpca = KernelPCA(n_components =5,kernel ='poly',degree =3)
             fig = k_means_visualise(pca,data,n_labels,y)
             
@@ -156,6 +163,23 @@ if __name__ == "__main__" :
                       'Centroids are marked with blue cross')
             name = tfilename[0]+'fig'+'_kPCA.png'
             fig.savefig(name)   # save the figure to file
-            plt.close(fig)      
+            plt.close(fig)  
+
+            fig = spectral_visualise(pca,data,n_labels,y)
+            
+            plt.title('Spectral clustering on the dataset (PCA-reduced data)')
+            
+            name = tfilename[0]+'SC_fig' + '_PCA.png'
+            fig.savefig(name)   # save the figure to file
+            plt.close(fig)
+
+            
+            fig = spectral_visualise(pca,data,n_labels,y)
+            
+            plt.title('Spectral clustering on the dataset (kPCA-reduced data)')
+            
+            name = tfilename[0]+'SC_fig' + '_kPCA.png'
+            fig.savefig(name)   # save the figure to file
+            plt.close(fig)
 
 sys.stdout.close()
