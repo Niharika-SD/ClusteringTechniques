@@ -72,7 +72,8 @@ def pcp(M, delta=1e-6, mu=None, maxiter=500, verbose=False, missing_data=True,
         # Shrinkage step.
         S = (M - L + Y / mu)
         s_dash = np.diag(np.asarray(np.sqrt(np.sum(S*S, axis=0))))
-        S = S*shrink(s_dash,lam/mu)*np.linalg.inv(s_dash)
+        print s_dash.shape, S.shape
+        S = (S.dot(shrink(s_dash,lam/mu))).dot(np.linalg.inv(s_dash))
         # Lagrange step.
         step = M - L - S
         step[missing] = 0.0
