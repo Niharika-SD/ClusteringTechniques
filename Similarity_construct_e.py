@@ -70,7 +70,7 @@ def create_affinity_mat(datafolder,n_patients,n_parcellations,n_com):
 
 	return aff
 
-def create_affinity_mat_IP(datafolder,n_parcellations,patient_ID):
+def create_affinity_mat_IP(datafolder,n_parcellations,patient_ID,n_comp):
 
 	""" Computes affinity matrix for each patient """
 
@@ -103,7 +103,7 @@ def create_affinity_mat_IP(datafolder,n_parcellations,patient_ID):
 		for j in range(i+1,n_parcellations):
 			V_A = (v[i+1,:].reshape(n_com,A.shape[1])).T
 			V_B = (v[j+1,:].reshape(n_com,A.shape[1])).T
-			aff[0,count] = E_frob_eff(V_A,V_B,W)
+			aff[0,count] = E_frob_eff(V_A[:, 1:n_comp],V_B[:,1:n_comp],W[1:n_comp])
 			count =count+1
 			# print i, j
 
@@ -120,13 +120,13 @@ def main():
 			sio.savemat('/home/niharika-shimona/Documents/Projects/Autism_Network/code/Comparative_Affinity_n/dis_affinity'+`i`+'.mat', {'dis_affinity': dis_affinity})
 	else:
 
-		datafolder = '/home/niharika-shimona/Documents/patient_data_timecourse_n_2/'
+		datafolder = '/home/niharika-shimona/Documents/Projects/Autism_Network/code/patient_data_timecourse_n_2/'
 		dis_affinity_IP = np.zeros((279,6670))
 		os.chdir(datafolder)
 		i =0
 		for file in glob.glob("*.mat"):
 			tfilename = file.split('_')[1].split('.')		
-			dis_affinity_IP[i] =create_affinity_mat_IP(datafolder,116,tfilename[0])
+			dis_affinity_IP[i] =create_affinity_mat_IP(datafolder,116,tfilename[0],5)
 			sio.savemat('/home/niharika-shimona/Documents/Projects/Autism_Network/code/Comparative_Affinity_n/dis_affinity_IP_'+tfilename[0]+'.mat', {'dis_affinity': dis_affinity_IP[i,:]})	
 			print 'patient' + tfilename[0]+'processed'
 			i =i+1

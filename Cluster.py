@@ -148,7 +148,7 @@ if __name__ == "__main__" :
             print(79 * '_')
 
             pca = PCA(n_components =30)
-            kpca = KernelPCA(n_components =5,kernel ='poly',degree =3)
+            #kpca = KernelPCA(n_components =5,kernel ='poly',degree =3)
             fig = k_means_visualise(pca,data,n_labels,y)
             
             plt.title('K-means clustering on the dataset (PCA-reduced data)\n'

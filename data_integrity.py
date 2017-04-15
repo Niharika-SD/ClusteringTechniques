@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.linalg import norm
 from scipy.spatial.distance import euclidean
-import os
+import os,sys
 import scipy.io as sio
 import matplotlib.pyplot as plt
 
