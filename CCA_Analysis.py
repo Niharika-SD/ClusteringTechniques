@@ -36,18 +36,21 @@ def extract_CCA_dataset(df_aut,df_cont,tasks_list,folder):
 				filename = folder + '/Corr_' + `ID_NO` + '.mat'
 				data = sio.loadmat(filename) 
 				x_aut = np.concatenate((x_aut,data['corr']),axis =0)
+				task_order = df_aut[df_aut['ID']==ID_NO].index.tolist()[0]
 				for j in range(len(tasks_list)):
-					task_order = df_aut[df_aut['ID']==ID_NO].index.tolist()[0]
 					y_aut[i][j] = df_aut[tasks_list[j]][task_order]
+				i =i+1
 
-	for ID_NO,score in df_cont['ID']:
+	i=0
+	for ID_NO in df_cont['ID']:
 
 				filename = folder + '/Corr_' + `ID_NO` + '.mat'
 				data = sio.loadmat(filename) 
 				x_cont = np.concatenate((x_cont,data['corr']),axis =0)
+				task_order = df_cont[df_cont['ID']==ID_NO].index.tolist()[0]
 				for j in range(len(tasks_list)):
-					task_order = df_cont[df_cont['ID']==ID_NO].index.tolist()[0]
 					y_cont[i][j] = df_cont[tasks_list[j]][task_order]
+				i =i+1
 
 	return x_aut[1:,:],y_aut[:,:],x_cont[1:,:],y_cont[:,:]
 
@@ -55,26 +58,28 @@ def extract_CCA_dataset(df_aut,df_cont,tasks_list,folder):
 if __name__ == '__main__':
 
 	df_aut,df_cont = Split_class()
-	tasks_list = ['ADOS.RBB','ADOS.SITotal','ADOS.CTotal','ADOS.SCTotal']
+	tasks_list_ADOS = ['ADOS.RBB','ADOS.SITotal','ADOS.CTotal','ADOS.SCTotal']
+	tasks_list_SRS = ["SRS.TotalRaw.Score","SRS.SocAwarRaw.Score","SRS.SocCogRaw.Score","SRS.SocCommRaw.Score","SRS.SocMotRaw.Score","SRS.SocAutManRaw.Score","SRS.SocSRBI.Score"]
+	
+	tasks_list = tasks_list_SRS
 	x_aut,y_aut,x_cont,y_cont = extract_CCA_dataset(df_aut,df_cont,tasks_list,'/home/niharika-shimona/Documents/Projects/Autism_Network/code/patient_data')
 
 	x = x_aut
 	y =y_aut
 
-	print x.shape, y.shape
-	L,E,(u,s,v) = pcp(x.T, maxiter=1000, verbose=True, svd_method="exact")
-	E = E.T
-	L = L.T
+	L,E,(u,s,v) = pcp(x,'gross_errors', maxiter=1000, verbose=True, svd_method="exact")
+	E = E
+	L = L
 	cca = CCA(scale =False)
 	pipeline = Pipeline([('CCA', cca)])
 
-	n_comp = np.asarray(np.linspace(40,60,5),dtype = 'int8')
+	n_comp = np.asarray(np.linspace(20,40,5),dtype = 'int8')
 	p_grid = dict(CCA__n_components = n_comp)
 
 	model =[]
 	nested_scores =[] 
 
-	for i in range(1):
+	for i in range(30):
 
 		inner_cv = KFold(n_splits=10, shuffle=True, random_state=i)
 		outer_cv = KFold(n_splits=10, shuffle=True, random_state=i)
