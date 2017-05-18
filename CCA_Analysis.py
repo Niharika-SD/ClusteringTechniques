@@ -27,7 +27,7 @@ def extract_CCA_dataset(df_aut,df_cont,tasks_list,folder):
 
 
 	y_aut = np.zeros((df_aut.shape[0],len(tasks_list)))
-	y_cont = np.zeros((df_aut.shape[0],len(tasks_list)))
+	y_cont = np.zeros((df_cont.shape[0],len(tasks_list)))
 	x_cont = np.zeros((1,6670))
 	x_aut = np.zeros((1,6670))
 	i = 0
@@ -59,15 +59,15 @@ if __name__ == '__main__':
 
 	df_aut,df_cont = Split_class()
 	tasks_list_ADOS = ['ADOS.RBB','ADOS.SITotal','ADOS.CTotal','ADOS.SCTotal']
-	tasks_list_SRS = ["SRS.TotalRaw.Score","SRS.SocAwarRaw.Score","SRS.SocCogRaw.Score","SRS.SocCommRaw.Score","SRS.SocMotRaw.Score","SRS.SocAutManRaw.Score","SRS.SocSRBI.Score"]
+	tasks_list_SRS = ['SRS.TotalRaw.Score','SRS.SocAwarRaw.Score','SRS.SocCogRaw.Score','SRS.SocCommRaw.Score','SRS.SocMotRaw.Score']
 	
 	tasks_list = tasks_list_SRS
 	x_aut,y_aut,x_cont,y_cont = extract_CCA_dataset(df_aut,df_cont,tasks_list,'/home/niharika-shimona/Documents/Projects/Autism_Network/code/patient_data')
 
-	x = x_aut
-	y =y_aut
+	x = x_cont
+	y =y_cont
 
-	L,E,(u,s,v) = pcp(x,'gross_errors', maxiter=1000, verbose=True, svd_method="exact")
+	L,E,(u,s,v) = pcp(x,'outliers', maxiter=1000, verbose=True, svd_method="exact")
 	E = E
 	L = L
 	cca = CCA(scale =False)
@@ -79,7 +79,7 @@ if __name__ == '__main__':
 	model =[]
 	nested_scores =[] 
 
-	for i in range(30):
+	for i in range(10):
 
 		inner_cv = KFold(n_splits=10, shuffle=True, random_state=i)
 		outer_cv = KFold(n_splits=10, shuffle=True, random_state=i)
