@@ -91,12 +91,13 @@ def spectral_performance_comparison(data,n_labels,labels):
   "module for comparing the performance of different clustering runs based on full dataset and the reduced dataset for spectral clustering"
   print 'NN affinity'
 
-  for i in range (20,40):
+  for i in range (2,40):
     
     print 'no of neighbours = ' + `i`
     bench_spec(SpectralClustering(n_clusters=n_labels,eigen_solver='arpack',affinity="nearest_neighbors",n_neighbors = i),
       name="NN affinity", data=data, labels =y)
     print '\n'
+  print '_____________________________________________________________________________'
 
   print 'rbf affinity'
   bench_spec(SpectralClustering(n_clusters=n_labels,eigen_solver='arpack',affinity="rbf"),
@@ -116,7 +117,7 @@ if __name__ == '__main__':
     os.makedirs(newpath)
   os.chdir(newpath)
 
-  sys.stdout=open('results_spectral'+'.txt',"w")
+  sys.stdout=open('results_red_dim_spectral'+'.txt',"w")
 
   print 'raw data'
   spectral_performance_comparison(data = x,n_labels= n_labels, labels=y)
@@ -127,8 +128,7 @@ if __name__ == '__main__':
 
       pca1 = PCA(n_components =i)
 
-      data_red = pca.inverse_transform(pca.fit_transform(x)) - pca1.inverse_transform(pca1.fit_transform(x))
-      print '\n \n \n '
+      data_red = pca.fit_transform(x)[:,i:]
       print 'rank_solution' + `i`
       spectral_performance_comparison(data_red,n_labels,y)
 

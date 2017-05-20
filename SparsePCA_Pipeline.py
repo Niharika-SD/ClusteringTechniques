@@ -32,30 +32,14 @@ def Split_class():
 	
 	return df_aut,df_cont
 
-def plot_embedding(X,y, title=None):
-
-	"Graphically renders a clustering algorithm run"
-
-	x_min, x_max = np.min(X, 0), np.max(X, 0)
-	X = (X - x_min) / (x_max - x_min)
-
-	fig= plt.figure()
-	ax = fig.add_subplot(111, projection='3d')
-	for i in range(X.shape[0]):
-		ax.scatter(X[i, 0], X[i, 1],X[i,2], color=plt.cm.Set1(y[i] / 10.))
-		plt.xticks([]), plt.yticks([])
-	if title is not None:
-		plt.title(title)
-	return fig,ax
-
 def evaluate_results(inner_cv,x,y,final_model,ind):
 
 	"Performs a complete plot based evaluation of the run"    
 	i =0
-	sPCA_MAE =[]
+	sPCA_MSE =[]
 	sPCA_r2=[]
 	sPCA_exp=[]
-	sPCA_MAE_test=[]
+	sPCA_MSE_test=[]
 	sPCA_r2_test =[]
 	sPCA_exp_test=[]
 
@@ -67,41 +51,41 @@ def evaluate_results(inner_cv,x,y,final_model,ind):
 			y_pred_test =y_pred_test[:,ind]
 			y_pred_train =y_pred_train[:,ind]
 		
-		sPCA_MAE.append(mean_absolute_error(y[train], y_pred_train))
+		sPCA_MSE.append(mean_squared_error(y[train], y_pred_train))
 		sPCA_r2.append(r2_score(y[train], y_pred_train),multioutput='variance_weighted')
 		sPCA_exp.append(explained_variance_score(y[train], y_pred_train),multioutput='variance_weighted')
 		i= i+1
 		print 'Split', i ,'\n' 
-		print 'MAE : ', mean_squared_error(y[train], y_pred_train)
+		print 'MSE : ', mean_squared_error(y[train], y_pred_train)
 		print 'Explained Variance Score : ', explained_variance_score(y[train], y_pred_train,multioutput='variance_weighted')
 		print 'r2 score: ' , r2_score(y[train], y_pred_train,multioutput='variance_weighted')
 		fig, ax = plt.subplots()
-		ax.scatter(y[train],y_pred_train,y[train])
+		ax.scatter(y[train],y_pred_train)
 		ax.plot([y[train].min(), y[train].max()], [y[train].min(), y[train].max()], 'k--', lw=4)
-		ax.set_xlabel('Predicted')
-		ax.set_ylabel('Measured')
+		ax.set_xlabel('Measured')
+		ax.set_ylabel('Predicted')
 		
 		name = 'fig_'+ `i`+ '_train.png'
 		fig.savefig(name)   # save the figure to fil
 		plt.close(fig)
 
-		sPCA_MAE_test.append(mean_absolute_error(y[test], y_pred_test))
+		sPCA_MSE_test.append(mean_squared_error(y[test], y_pred_test))
 		sPCA_r2_test.append(r2_score(y[test], y_pred_test),multioutput='variance_weighted')
 		sPCA_exp_test.append(explained_variance_score(y[test], y_pred_test),multioutput='variance_weighted')
-		print 'MAE : ', mean_squared_error(y[test], y_pred_test)
+		print 'MSE : ', mean_squared_error(y[test], y_pred_test)
 		print 'Explained Variance Score : ', explained_variance_score(y[test], y_pred_test,multioutput='variance_weighted')
 		print 'r2 score: ' , r2_score(y[test], y_pred_test,multioutput='variance_weighted')
 		fig, ax = plt.subplots()
-		ax.scatter(y[test],y_pred_test,y[test])
+		ax.scatter(y[test],y_pred_test)
 		ax.plot([y[test].min(), y[test].max()], [y[test].min(), y[test].max()], 'k--', lw=4)
-		ax.set_xlabel('Predicted')
-		ax.set_ylabel('Measured')
+		ax.set_xlabel('Measured')
+		ax.set_ylabel('Predicted')
 		name = `i`+ '_test.png'
 		fig.savefig(name)   # save the figure to file
 		plt.close(fig)
 
-	print(np.mean(sPCA_MAE),np.mean(sPCA_r2),np.mean(sPCA_exp))
-	print(np.mean(sPCA_MAE_test),np.mean(sPCA_r2_test),np.mean(sPCA_exp_test))
+	print(np.mean(sPCA_MSE),np.mean(sPCA_r2),np.mean(sPCA_exp))
+	print(np.mean(sPCA_MSE_test),np.mean(sPCA_r2_test),np.mean(sPCA_exp_test))
 
 	return
 
